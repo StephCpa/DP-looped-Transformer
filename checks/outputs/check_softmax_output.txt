@@ -1,0 +1,77 @@
+== Prop 10 (normalized tokens, R=1, with injection): observed / bound, must be <= 1 ==
+Jacobian bound: (1-alpha) + alpha*beta.   Gradient bound: 4 * alpha * S_T(rho), rho = 1 - alpha(1-beta), beta < 1
+ beta    T  max||J||/bound  max|g|/bound    max|g|  max/med |g|
+ 0.30    4           0.889        0.0742    0.3485          2.5
+ 0.30   16           0.889        0.0674    0.3848          2.5
+ 0.30   64           0.889        0.0673    0.3848          2.5
+ 0.30  256           0.889        0.0673    0.3848          2.5
+ 0.60    4           0.817        0.0671    0.3961          2.8
+ 0.60   16           0.817        0.0498    0.4836          2.9
+ 0.60   64           0.817        0.0484    0.4843          2.9
+ 0.60  256           0.817        0.0484    0.4843          2.9
+ 0.90    4           0.773        0.0579    0.4294          3.0
+ 0.90   16           0.773        0.0250    0.5588          3.3
+ 0.90   64           0.773        0.0146    0.5608          3.3
+ 0.90  256           0.773        0.0140    0.5608          3.3
+ 0.99    4           0.761        0.0576    0.4573          3.2
+ 0.99   16           0.761        0.0203    0.6271          3.7
+ 0.99   64           0.761        0.0058    0.6313          3.8
+ 0.99  256           0.761        0.0022    0.6313          3.8
+Beyond the contraction regime (beta > 1), T=64: Jacobian bound holds, state stays in the unit ball, gradients are not bounded a priori
+beta=  2.0  max||J||=  1.019 (bound   1.50)  max loss=1.101 (cap 2.0)  max|g|=    1.891  max/med |g|=     20.8
+beta=  5.0  max||J||=  1.831 (bound   3.00)  max loss=1.469 (cap 2.0)  max|g|=    1.052  max/med |g|=   2105.8
+beta= 20.0  max||J||=  6.709 (bound  10.50)  max loss=1.576 (cap 2.0)  max|g|=    0.001  max/med |g|=198583964038.0
+
+== Forgetting without injection (Prop 2 / Prop 8): same tokens, two different queries, beta=0.5 ==
+T=  4  max |z_T(q) - z_T(q')|: no injection 1.59e-01   with injection 1.91e-01
+T= 16  max |z_T(q) - z_T(q')|: no injection 2.40e-04   with injection 2.13e-01
+T= 64  max |z_T(q) - z_T(q')|: no injection 3.30e-14   with injection 2.13e-01
+
+== Raw (unnormalized) tokens: a bounded state does not bound sensitivity. beta = 5 ==
+   T  max||J||      max|g|  max/med |g|  max loss
+   4     10.67   2.621e-01    4.703e+01     14.34
+  16     10.67   6.718e-01    6.637e+02     15.26
+  64     10.67   3.736e+00    3.714e+03     15.26
+
+== Part B: linear loop, full matrix preconditioner at Gamma = gamma*I; clipping on ||grad||_F; 3 draws ==
+stationarity in the trace direction: mean_i min(1, C/||G_i||_F) tr(G_i) = 0;  C = median norm at gamma=0.05
+  T  draw  gam_erm  unstable | scalar clip gam        R_C  unstable | matrix clip gam        R_C  unstable
+  1     0    0.618    0.0385 |           0.705  1.027e+00    0.1195 |           0.692  1.019e+00    0.1035
+  1     1    0.635    0.0512 |           0.711  1.033e+00    0.1180 |           0.707  1.031e+00    0.1125
+  1     2    0.643    0.0535 |           0.707  1.027e+00    0.1133 |           0.704  1.026e+00    0.1105
+  4     0    0.467    0.0018 |           0.655  2.996e+00    0.0645 |           0.610  1.675e+00    0.0352
+  4     1    0.513    0.0075 |           0.668  2.535e+00    0.0760 |           0.619  1.430e+00    0.0445
+  4     2    0.491    0.0043 |           0.658  2.153e+00    0.0725 |           0.604  1.227e+00    0.0355
+ 16     0    0.447    0.0005 |           0.585  5.668e+05    0.0205 |           0.542  1.560e+04    0.0073
+ 16     1    0.449    0.0005 |           0.591  8.715e+05    0.0240 |           0.539  1.041e+04    0.0075
+ 16     2    0.392    0.0003 |           0.576  6.753e+06    0.0217 |           0.531  1.364e+05    0.0077
+
+== Who carries the gradient at beta=3.0 (normalized tokens)? rho_i = ||J(z_T)|| ==
+   T frac pushing up  max/med |g|  median rho  spearman(|g|, 1/(1-rho))  top-1% share of sum|g|
+   4           0.886          9.5       0.720                     0.461                   0.047
+  16           0.846         99.7       0.664                     0.845                   0.135
+  64           0.842        472.5       0.663                     0.850                   0.166
+ 256           0.841        545.3       0.663                     0.851                   0.164
+
+== Clipping fixed point of the normalized softmax loop vs T (C in units of the median |g| at beta=1) ==
+R_C = L_test(clipped fixed point) / L_test(unclipped ERM);  het = max|g| / median|g| at the unclipped ERM
+  T beta_erm  L_erm/L0       het  R_C: C=10med    C=med  C=0.1med  beta @C=med  beta @0.1med
+  1    31.61     0.390     525.7         1.000    1.000     1.000        31.61         31.64
+  4     5.56     0.192     144.8         1.000    1.001     1.037         5.59          7.23
+ 16     3.29     0.203      69.1         1.000    1.002     1.079         3.39          4.47
+ 64     3.43     0.208     553.6         0.996    0.997     1.068         3.24          4.38
+
+== Replication over 5 independent draws (normalized tokens, n=2000) ==
+  T  draw  beta_erm  beta @C=med  L_erm/L0  R_C (C=med)
+ 16     0      3.16         3.32     0.199        0.999
+ 16     1      3.13         3.25     0.196        0.999
+ 16     2      3.21         3.28     0.202        1.001
+ 16     3      3.20         3.26     0.200        1.000
+ 16     4      3.14         3.31     0.199        1.000
+ 16 median R_C = 1.000, range [0.999, 1.001]
+ 64     0      2.93         3.14     0.206        0.995
+ 64     1      3.20         3.29     0.198        1.004
+ 64     2      3.11         3.28     0.201        1.009
+ 64     3      2.90         3.17     0.199        0.990
+ 64     4      3.11         3.31     0.199        1.006
+ 64 median R_C = 1.004, range [0.990, 1.009]
