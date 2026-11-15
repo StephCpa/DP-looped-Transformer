@@ -1,0 +1,33 @@
+pending jobs in this pass: 14
+{"arch": "soft_norm", "T": 16, "arm": "np", "randT": false, "seed": 0, "lr": 0.003, "med_T": 0.01695306971669197, "fcat_T": 0.0, "seconds": 120.8}
+{"arch": "soft_norm", "T": 16, "arm": "np", "randT": false, "seed": 0, "lr": 0.01, "med_T": 0.36735522747039795, "fcat_T": 0.005615234375, "seconds": 117.8}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": false, "seed": 0, "lr": 0.001, "med_T": 0.024831250309944153, "fcat_T": 0.0, "seconds": 125.9}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": false, "seed": 0, "lr": 0.003, "med_T": 0.011181005276739597, "fcat_T": 0.0, "seconds": 120.2}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": false, "seed": 0, "lr": 0.01, "med_T": 0.00664459029212594, "fcat_T": 0.0, "seconds": 121.9}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": false, "seed": 0, "lr": 0.001, "med_T": 0.16508689522743225, "fcat_T": 0.00201416015625, "seconds": 121.8}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": false, "seed": 0, "lr": 0.003, "med_T": 0.09593880921602249, "fcat_T": 0.00067138671875, "seconds": 121.1}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": false, "seed": 0, "lr": 0.01, "med_T": 0.1507435142993927, "fcat_T": 0.00091552734375, "seconds": 120.7}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": true, "seed": 0, "lr": 0.001, "med_T": 0.023568149656057358, "fcat_T": 6.103515625e-05, "seconds": 124.9}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": true, "seed": 0, "lr": 0.003, "med_T": 0.012038826011121273, "fcat_T": 0.0, "seconds": 122.9}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": true, "seed": 0, "lr": 0.01, "med_T": 0.009779833257198334, "fcat_T": 0.0, "seconds": 122.2}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": true, "seed": 0, "lr": 0.001, "med_T": 0.16906701028347015, "fcat_T": 0.00201416015625, "seconds": 131.4}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": true, "seed": 0, "lr": 0.003, "med_T": 0.09121406078338623, "fcat_T": 0.00079345703125, "seconds": 122.3}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": true, "seed": 0, "lr": 0.01, "med_T": 0.17330555617809296, "fcat_T": 0.00115966796875, "seconds": 118.1}
+pending jobs in this pass: 15
+{"arch": "soft_norm", "T": 16, "arm": "np", "randT": false, "seed": 1, "lr": 0.003, "med_T": 0.020018229261040688, "fcat_T": 0.0, "seconds": 123.4}
+{"arch": "soft_norm", "T": 16, "arm": "np", "randT": false, "seed": 2, "lr": 0.003, "med_T": 0.01623055897653103, "fcat_T": 0.0, "seconds": 119.7}
+{"arch": "soft_norm", "T": 16, "arm": "np", "randT": false, "seed": 3, "lr": 0.003, "med_T": 0.02039816975593567, "fcat_T": 0.0, "seconds": 122.3}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": false, "seed": 1, "lr": 0.01, "med_T": 0.009372517466545105, "fcat_T": 0.0, "seconds": 126.9}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": false, "seed": 2, "lr": 0.01, "med_T": 0.009178795851767063, "fcat_T": 0.0, "seconds": 124.3}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": false, "seed": 3, "lr": 0.01, "med_T": 0.010400318540632725, "fcat_T": 0.0, "seconds": 123.1}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": false, "seed": 1, "lr": 0.003, "med_T": 0.10541082173585892, "fcat_T": 0.0006103515625, "seconds": 126.5}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": false, "seed": 2, "lr": 0.003, "med_T": 0.09332665801048279, "fcat_T": 0.0003662109375, "seconds": 128.5}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": false, "seed": 3, "lr": 0.003, "med_T": 0.09689521789550781, "fcat_T": 0.000244140625, "seconds": 126.1}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": true, "seed": 1, "lr": 0.01, "med_T": 0.012549064122140408, "fcat_T": 0.0, "seconds": 118.7}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": true, "seed": 2, "lr": 0.01, "med_T": 0.01599733531475067, "fcat_T": 0.0, "seconds": 121.7}
+{"arch": "soft_norm", "T": 16, "arm": "clip", "randT": true, "seed": 3, "lr": 0.01, "med_T": 0.01395904365926981, "fcat_T": 0.0, "seconds": 126.0}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": true, "seed": 1, "lr": 0.003, "med_T": 0.11148224771022797, "fcat_T": 0.000732421875, "seconds": 125.2}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": true, "seed": 2, "lr": 0.003, "med_T": 0.09200435131788254, "fcat_T": 0.00042724609375, "seconds": 129.0}
+{"arch": "soft_norm", "T": 16, "arm": "dp", "randT": true, "seed": 3, "lr": 0.003, "med_T": 0.09700395911931992, "fcat_T": 0.0003662109375, "seconds": 130.1}
+pending jobs in this pass: 0
+ALLDONE

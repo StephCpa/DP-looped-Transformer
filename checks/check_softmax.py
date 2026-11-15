@@ -1,4 +1,4 @@
-"""Checks for claude/dp-looped-theory.md v0.3, section 16.
+"""Checks for docs/dp-looped-theory.md v0.3, section 16.
 
 Part A. Softmax-attention loop (retrieval toy).
   Prompt: M stored tokens x_1..x_M in R^p; query q = noisy copy of x_1; target x_1.
@@ -78,7 +78,7 @@ def root(f, grid):
 
 def prop10(alpha=0.5):
     seed(10)
-    print("== Prop 10 (normalized tokens, R=1, with injection): observed / bound, must be <= 1 ==")
+    print("== Prop 10 (normalized tokens, R=1, with injection): observed / bound, asserted <= 1 ==")
     print("Jacobian bound: (1-alpha) + alpha*beta.   Gradient bound: 4 * alpha * S_T(rho), rho = 1 - alpha(1-beta), beta < 1")
     X, tgt, q = make_tokens(2000)
     print(f"{'beta':>5} {'T':>4} {'max||J||/bound':>15} {'max|g|/bound':>13} {'max|g|':>9} {'max/med |g|':>12}")
@@ -86,6 +86,7 @@ def prop10(alpha=0.5):
         for T in (4, 16, 64, 256):
             _, g, jm, _, _ = run(beta, X, tgt, q, T, alpha, jac=True)
             rho = 1 - alpha * (1 - beta); ST = (1 - rho ** T) / (1 - rho)
+            assert jm <= ((1 - alpha) + alpha * beta) * (1 + 1e-6) and np.abs(g).max() <= 4 * alpha * ST * (1 + 1e-6), f"Prop 10 bound violated at beta={beta}, T={T}"
             print(f"{beta:5.2f} {T:4d} {jm / ((1 - alpha) + alpha * beta):15.3f} {np.abs(g).max() / (4 * alpha * ST):13.4f} "
                   f"{np.abs(g).max():9.4f} {np.abs(g).max() / np.median(np.abs(g)):12.1f}")
     print("Beyond the contraction regime (beta > 1), T=64: Jacobian bound holds, state stays in the unit ball, gradients are not bounded a priori")
@@ -102,6 +103,7 @@ def forgetting(alpha=0.5):
     for T in (4, 16, 64):
         d_no = np.abs(run(0.5, X, tgt, q, T, alpha, inject=False)[3] - run(0.5, X, tgt, q2, T, alpha, inject=False)[3]).max()
         d_in = np.abs(run(0.5, X, tgt, q, T, alpha, inject=True)[3] - run(0.5, X, tgt, q2, T, alpha, inject=True)[3]).max()
+        assert T < 64 or d_no < 1e-8, "forgetting check failed: a contractive loop without injection should forget its query"
         print(f"T={T:3d}  max |z_T(q) - z_T(q')|: no injection {d_no:.2e}   with injection {d_in:.2e}")
 
 
