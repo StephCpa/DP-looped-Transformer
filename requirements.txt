@@ -1,0 +1,4 @@
+# Versions used for every result in this repository (Python 3.13.18, Linux x86_64, CPU)
+numpy==2.5.3
+jax==0.12.0.1
+jaxlib==0.12.0.1

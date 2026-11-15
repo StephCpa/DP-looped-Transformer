@@ -1,4 +1,4 @@
-"""Numerical sanity checks for claude/dp-looped-theory.md (DP + looped transformers).
+"""Numerical sanity checks for docs/dp-looped-theory.md (DP + looped transformers).
 
 Toy block: F(z, x; theta) = tanh(W z + U x), theta = (W, U), ||W||_2 <= rho.
 Checks: Lemma 1 (forward sensitivity), Lemma 2 (gradient norm), Lemma 3 (smoothness),
@@ -39,7 +39,7 @@ def grad(W, U, x, y, T):
 
 
 def lemmas_1_2_3(m=6, p=3, trials=200):
-    print("== Lemmas 1-3: max over trials of (observed / bound); must be <= 1 ==")
+    print("== Lemmas 1-3: max over trials of (observed / bound); asserted <= 1 ==")
     print(f"{'rho':>5} {'T':>5} {'L1 fwd':>9} {'L2 grad':>9} {'L3 smooth':>10} {'|grad| max':>11}")
     for rho in (0.5, 0.9, 0.99):
         for T in (5, 20, 100, 400):
@@ -60,6 +60,7 @@ def lemmas_1_2_3(m=6, p=3, trials=200):
                 r2 = max(r2, np.linalg.norm(g1) / (G * Lth * ST))
                 r3 = max(r3, np.linalg.norm(g2 - g1) / (beta * dth))
                 gmax = max(gmax, np.linalg.norm(g1))
+            assert max(r1, r2, r3) <= 1.0, f"Lemma 1-3 bound violated at rho={rho}, T={T}: {r1}, {r2}, {r3}"
             print(f"{rho:5.2f} {T:5d} {r1:9.4f} {r2:9.4f} {r3:10.5f} {gmax:11.3f}")
 
 
@@ -97,6 +98,8 @@ def coherence(m=4, p=3):
                     dl = s * rng.normal(size=d)
                     z = np.tanh((W + dl[:m * m].reshape(m, m)) @ z + (U + dl[m * m:].reshape(m, p)) @ x)
                 acc_u += np.sum((z - zs[-1]) ** 2)
+            assert abs(acc_t / n / s**2 / tied_pred - 1) < 0.1 and abs(acc_u / n / s**2 / untied_pred - 1) < 0.1, "Prop 3: Monte Carlo disagrees with the first-order prediction"
+            assert gid < 1e-8, "Prop 3: gradient identity M_T^T v failed"
             print(f"{rho:5.2f} {T:4d} {tied_pred / untied_pred:8.3f} {acc_t / n / s**2 / tied_pred:13.3f} "
                   f"{acc_u / n / s**2 / untied_pred:15.3f} {gid:12.2e}")
 
@@ -114,6 +117,8 @@ def tables():
             for t in range(T):
                 z = rho * z + 1.0 - a[t]; ok &= z > -1e-9
             ok &= abs(z) < 1e-6 and abs(np.sum(a ** 2) - s1 ** 2 / s2) < 1e-6 * s1**2 / s2
+            assert ok, f"Prop 7: shift schedule infeasible at rho={rho}, T={T}"
+            assert s1 / np.sqrt(T * s2) <= 1 + 1e-12 and s1 ** 2 / s2 <= min(T, (1 + rho) / (1 - rho) if rho < 1 else T) * (1 + 1e-9), "Prop 4 / Prop 7 inequality violated"
             lim = (1 + rho) / (1 - rho) if rho < 1 else float('inf')
             print(f"{rho:6.2f} {T:5d} {s1 / np.sqrt(T * s2):12.4f} {s1**2 / s2:9.3f} {lim:22.3f} {str(bool(ok)):>9}")
 
@@ -136,5 +141,5 @@ def toy_valley(T=10, T2=20, c=1.0, eta=0.005, s=0.05, K=4000, R=20000):
 
 
 if __name__ == "__main__":
-    lemmas_1_2_3(); coherence(); tables(); toy_valley()
+    lemmas_1_2_3(); coherence(); tables(); print("\nALL ASSERTIONS PASSED (Lemmas 1-3, Props 3, 4, 7); the toy runs below are statistical and not asserted"); toy_valley()
     toy_valley(s=0.15, K=16000)  # longer, noisier run: drift of mean a along the valley

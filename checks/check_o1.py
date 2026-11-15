@@ -1,4 +1,4 @@
-"""O1 check for claude/dp-looped-theory.md (v0.2): looped in-context gradient descent under DP.
+"""O1 check for docs/dp-looped-theory.md (v0.2): looped in-context gradient descent under DP.
 
 Model. Prompt i: X_i (N x p, rows N(0,I)), w*_i ~ N(0, I/p), y = X w*, query x_q ~ N(0,I).
 Loop (one shared scalar gamma): w_{t+1} = w_t - gamma (S_i w_t - S_i w*_i),  S_i = X^T X / N  [raw]
@@ -49,6 +49,7 @@ def profile():
     print("== Prop 9: sup over u in (0,1) of T u (1-u)^(2T-1)  (contracting-side gradient, units c^2/gamma) ==")
     u = np.linspace(1e-6, 1 - 1e-6, 2_000_001)
     for T in (1, 2, 4, 16, 64, 256):
+        assert np.max(T * u * (1 - u) ** (2 * T - 1)) <= 0.25 + 1e-9, "Prop 9: contracting-side bound violated"
         print(f"T={T:4d}  sup={np.max(T * u * (1 - u) ** (2 * T - 1)):.4f}   at u=2.2: {T * 2.2 * 1.2 ** (2 * T - 1):.3e}")
 
 

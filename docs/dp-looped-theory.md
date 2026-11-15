@@ -1,12 +1,55 @@
-# DP × Looped Transformers: theoretical analysis (v0.3, 15 Nov 2026)
+# Differential Privacy Meets Looped Transformers: Clipping Turns Stability from a Maximum Condition into a Quantile Condition
 
-Status: theory by Claude. Lemmas 1–3, Props 1–11 and Theorems 1–2 are proved or sketched below and checked numerically on toy loops (`claude/dp-looped/check_theory.py`, `check_o1.py`, `check_softmax.py`). H1 and C1 are hypotheses; H2 is refuted as a general claim and replaced by Prop 11 (§16). Nothing here has been checked in Lean or against a trained transformer.
+Working notes, v0.4 (16 Nov 2026). Canonical copy: `docs/dp-looped-theory.md` in github.com/StephCpa/DP-looped-Transformer; paths below are repository paths.
 
-**Trained-model pilot (15 Nov): preregistered in `claude/dp-looped/PREREG_PILOT.md`, 91 of 120 runs done.** On a trained looped linear transformer, clipping raises the unstable fraction at $T=16$ from 0.03–0.09% to 4.6–5.0% (E1 main clause held; its "larger at $T=16$ than $T=4$" clause failed and was mis-specified against §15). Token normalization cuts the erosion from 4.7 to 0.75 pp (E3 held). The softmax block shows no clipping penalty at $T=4$ (E2). The softmax $T=16$ cells, which carry the extrapolation-drift test, are pending. Statements below that "nothing has touched a trained model" predate this.
+**Scope of the claim.** These are interim results of mechanism research. They do not support "DP generally harms looped transformers". The claim is two statements:
 
-v0.3 changes: softmax-attention loop worked (§16: Props 10–11, clipping test, replication); matrix-preconditioner check added to §15; three corrections to v0.2 (below); P6 confirmed at toy level; next step is a real-model pilot (§13).
+1. The privacy accounting of DP-SGD does not change with loop depth (Prop 1).
+2. The loop-specific risk comes from per-sample gradient clipping: it changes what keeps a loop stable from the *maximum* over training samples to a *quantile* of them (Theorem 2). This is shown for linear in-context-gradient-descent loops, by fixed-point analysis and, at small scale, in trained models.
 
-v0.2 changes: prior-art gate run and passed (§14); O1 worked (§15), which refutes H2 as stated and replaces it with Theorem 2; verdict, §7, §12 and §13 updated.
+Everything else here is supporting analysis, a toy observation, or an open question, and is tagged as such in the table below.
+
+**Trained-model pilot: complete, 120 of 120 runs (`pilot/PREREG_PILOT.md`).** Three seeds per cell, so every entry is weak evidence.
+
+| Preregistered test | Result |
+|---|---|
+| E1: clipping erodes stability in a trained linear loop, $T=16$ | **Passed.** Unstable fraction 0.03–0.09% → 4.6–5.0%; +4.74 pp [+4.13, +5.36]. Holds under a finite-horizon definition too (+5.46 pp) |
+| E1, clause "larger at $T=16$ than at $T=4$" | **Failed**; mis-specified against §15 |
+| E3: token normalization reduces the erosion | **Passed.** 4.74 → 0.75 pp |
+| E2: no clipping penalty in the softmax block, $T=4$ | **Passed.** Ratio 1.03 [0.92, 1.15] |
+| E2 at $T=16$ | **Failed the predicted band, in the favourable direction** (ratio 0.51: clipping helped), and **not interpretable**: the arms selected different learning rates |
+| E4: extrapolation drift under noise | **Failed; kill rule triggered.** $D_{2T}/D_T=0.67$ [0.26, 1.70]. A1 now has toy support only |
+
+An audit prompted by the review found no silently zeroed gradients in any audited or new run (Amendment 1 in the preregistration).
+
+v0.4 changes, in response to the review of 16 Nov (`docs/review-2026-11-16-response.md`): title and claim narrowed; statement-status table added; Prop 7 restated as proven only for the isotropic linear loop; withdrawn H2 and P3 moved to Appendix A; §17 added to separate the softmax toy from the pilot's softmax block; paths changed to repository paths.
+
+## Statement status
+
+Tags: **proven** (complete argument in this document), **proof sketch** (argument outlined, steps missing), **conjecture**, **numerical observation** (seen in a toy or the pilot, no proof).
+
+| Statement | Status | Scope or gap |
+|---|---|---|
+| Prop 1 (privacy independent of the loop) | proven | standard DP-SGD argument |
+| Lemma 1, Lemma 1′, Prop 2 | proven | under A1–A2 |
+| Lemma 2 (gradient norm) | proven | |
+| Lemma 3 (smoothness) | proof sketch | constants not checked line by line; consistent with the numerics |
+| Theorem 1 (utility bound) | proven, conditional on Lemma 3 | upper bound only; no lower bound |
+| Prop 3 (coherence factor) | proven | first order in the perturbation |
+| Prop 4 (tied vs untied) | proven | compares worst-case bounds, not achieved performance |
+| H1 (clipping as normalization) | conjecture | heuristic progress ratio |
+| Prop 5 (equipartition) | proven | local quadratic model only |
+| Prop 6 (flatness = forward robustness) | proven | squared loss at interpolation |
+| C1 (noise prefers contractive loops) | conjecture | two-parameter toy support |
+| Prop 7 (hidden-state noise) | proven for the isotropic linear loop; proof sketch otherwise | see §10 for the four missing steps |
+| Prop 8 (multistability obstruction) | proven | |
+| Prop 9 (gradient profile) | proven | scalar-prompt model |
+| Theorem 2 (maximum to quantile) | proven for (i), (ii) | scalar prompt, scalar parameter; (iii) is a remark; the matrix case is numerical only |
+| Prop 10 (token-normalized softmax loop) | proven | the specific convex-combination block of §16 |
+| Prop 11 (rate vs fixed-point parameters) | proof sketch | asymptotic; assumes convergence to a hyperbolic fixed point |
+| Extrapolation drift (A1) | numerical observation | two-parameter toy; pilot E4 tests it |
+| Stability erosion in trained loops (A2) | numerical observation | pilot E1, three seeds |
+| Softmax-loop robustness to clipping (A6) | numerical observation | toy of §16 only; the pilot's softmax block is a different model (§17) |
 
 ## 0. Verdict
 
@@ -21,9 +64,9 @@ v0.2 changes: prior-art gate run and passed (§14); O1 worked (§15), which refu
 
 **Alive**
 
-- **A1. Extrapolation drift.** DP noise diffuses freely along directions the training loss does not pin at $T_{\text{train}}$. Those directions control behaviour at $T_{\text{test}}\neq T_{\text{train}}$. Toy: prediction variance at $2T$ is 430× larger for a marginal solution than a contractive one and grows linearly in training steps (§9). This is the precise form of "fixed-point drift".
+- **A1. Extrapolation drift (toy support only: the pilot's test of it, E4, failed on 16 Nov).** DP noise diffuses freely along directions the training loss does not pin at $T_{\text{train}}$. Those directions control behaviour at $T_{\text{test}}\neq T_{\text{train}}$. Toy: prediction variance at $2T$ is 430× larger for a marginal solution than a contractive one and grows linearly in training steps (§9). This is the precise form of "fixed-point drift".
 - **A2. Clipping erodes the stability margin (Theorem 2, §15).** Stability of a loop is enforced by the exponentially large gradients of the few samples on which it is expansive. Clipping caps exactly those, so the restoring force becomes a count instead of a magnitude. In the in-context regression loop the fraction of unstable training prompts at $T=16$ rises from 0.03–0.08% to 2.1–2.4% (four draws), and the test-loss ratio (clipped fixed point over unclipped) is about 1.03 at $T=1$, 2.2–3.0 at $T=4$ and $5\times10^5$–$6\times10^7$ at $T=16$ (five draws). The effect survives Frobenius-norm clipping of a full matrix preconditioner, weakened. This is the strongest loop-specific DP effect found so far, and it is the closest thing to the original "DP worsens stability" intuition, through clipping, not noise.
-- **A6. What makes a loop robust to clipping (§15–16).** Three separate ingredients, in increasing cost:
+- **A6. What makes a loop robust to clipping (§15–16; toy-level, see §17 for what the pilot does and does not test).** Three separate ingredients, in increasing cost:
   - *Token normalization* makes the stability region depend on the parameters only, not on the data.
   - *A bounded state* (convex-combination update) bounds the loss, so a shifted fixed point has bounded cost. In the normalized softmax loop the clipped/unclipped loss ratio is 0.99–1.01 at the median threshold for $T$ up to 64 (five draws), against $10^5$–$10^7$ for the raw linear loop at $T=16$.
   - *A-priori contraction* ($\beta R^2<1$) gives the gradient bound clipless DP needs, but costs 3.1–3.3× in loss in the toy, because the trained temperature sits in the multistable regime.
@@ -36,7 +79,7 @@ v0.2 changes: prior-art gate run and passed (§14); O1 worked (§15), which refu
 
 1. I called tied-vs-untied "an empirical question" because coherent noise and dimension "pull in opposite directions". Props 3–4 settle the bound-level question in favour of tying; what remains empirical is the coherence ratio in H1.
 2. I said DP "scales the existing instability by $1/(1-\rho)$". In-horizon that is wrong at stationarity (Prop 5); the factor enters through curvature and clipping instead.
-3. I presented privacy amplification by iteration as a potential "positive result". Privacy does saturate in $T$ (Prop 7), but it buys nothing over output perturbation in the linear case, and it excludes multistable memory (Prop 8).
+3. I presented privacy amplification by iteration as a potential "positive result". The privacy cost does stop growing in $T$ for the linear loop (Prop 7; only sketched for nonlinear loops), but it buys nothing over output perturbation in the linear case, and it excludes multistable memory (Prop 8).
 4. I listed "go clipless" without the a-priori-enforcement caveat (A5).
 
 **Corrections to v0.1 (11 Nov)**
@@ -155,17 +198,13 @@ Numerically, random tanh loops have $\kappa_T\in[0.76,1.37]$, i.e. incoherent. T
 
 Empirical caution: for *embedding* tying under DP-SGD the two papers I found disagree (Ding et al. report sharing is essential; El Mais et al. report untied is better on GPT-2). Neither is depth tying.
 
-## 7. Clipping bias (H2: refuted as stated, see §15)
-
-The general bound and the pointers to known results in this section stand. H2 and the "concrete instance" below are kept for the record and are wrong about which samples get clipped; §15 has the corrected statement.
+## 7. Clipping bias: the general bound
 
 Per-sample gradient $g_i=M_T(x_i)^\top v_i$ with $\|g_i\|\le\|v_i\|L_\theta S_T(\rho_i)$, where $\rho_i$ is the contraction rate along sample $i$'s trajectory. Clipping weights $w_i=\min(1,C/\|g_i\|)$; bias $\|\bar g_{\text{clip}}-\bar g\|\le\frac1n\sum_i(\|g_i\|-C)_+$.
 
-**H2.** In looped models $w_i$ is anti-correlated with the loop depth sample $i$ needs. Slowly contracting samples have gradients larger by up to $S_T(\rho_i)/S_T(\rho_{\text{med}})\le T(1-\rho_{\text{med}})$, so the effective objective $\sum_iw_i\ell_i$ underweights them, increasingly with $T$ until $T\gtrsim1/(1-\max_i\rho_i)$.
-
 Known results to lean on: no bias when the gradient distribution is symmetric (Chen, Wu, Hong); otherwise clipped SGD reaches only a neighbourhood governed by the gradient spread (Koloskova et al.). Here the spread is bounded by $G^2L_\theta^2\,\mathbb E[S_T(\rho_i)^2]$, so the controlling statistic is the second moment of $S_T(\rho_i)$ across samples.
 
-**Concrete instance.** A looped linear-attention block doing in-context gradient descent on least squares has $w_{t+1}=(I-\eta\hat\Sigma_x)w_t+\eta X^\top y/n$, so $\rho_i=1-\eta\lambda_{\min}(\hat\Sigma_{x_i})$. Heterogeneity of $\rho_i$ is heterogeneity of in-context condition numbers, and H2 predicts DP clipping down-weights ill-conditioned prompts.
+Which samples exceed the threshold depends on what the parameter does (Prop 11, §16). For a rate parameter it is the samples on which the loop expands (Theorem 2, §15). The original hypothesis H2 was wrong about this; it is in Appendix A.
 
 ## 8. Memory
 
@@ -198,12 +237,31 @@ Here $s=\sigma_{\text{DP}}C/B$ is the per-step noise std on the mean gradient.
 
 ## 10. Hidden-state noise (Setting B)
 
-**Prop 7 (privacy saturates in loop depth).** Let $F(\cdot,x)$ be $\rho$-Lipschitz on all of $\mathcal Z$ (or composed with projection onto a convex set), $\sup_z\|F(z,x)-F(z,x')\|\le s_x$ for adjacent $x,x'$, and $\xi_t\sim N(0,\sigma^2I)$. Releasing only $z_T$ is $(\alpha,\varepsilon_\alpha)$-RDP with
-$$\varepsilon_\alpha\le\frac{\alpha s_x^2}{2\sigma^2}\,\Gamma_T,\qquad\Gamma_T=\frac{S_T^2}{S_T^{(2)}}=\frac{(1+\rho)(1-\rho^T)}{(1-\rho)(1+\rho^T)}\le\min\Big\{T,\frac{1+\rho}{1-\rho}\Big\}.$$
+**Prop 7 (privacy cost of hidden-state noise in a contractive loop).** *Status: proven for the isotropic linear loop; a candidate upper bound, with a proof sketch only, for general linear and nonlinear loops.*
 
-*Proof sketch.* Shifted-Rényi argument of Feldman et al. with the contraction-reduction step $z_t=\rho z_{t-1}+s_x-a_t$, cost $\frac{\alpha}{2\sigma^2}\sum_ta_t^2$. Because $x$ is injected at every step the shift is fed every step; minimizing $\sum a_t^2$ subject to $z_T=0$ gives $a_t\propto\rho^{T-t}$ and the value above; feasibility $z_t\ge0$ reduces to $\rho^{T-t}\le1$. ∎
+Setting, stated precisely:
 
-Tight: the scalar linear loop attains it. Naive composition gives $\Gamma_T=T$; at $\rho=0.9$, $\Gamma_{100}=19.0$.
+- State $z_t\in\mathbb R^m$, $z_0$ fixed and data-independent. $K\subseteq\mathbb R^m$ closed and convex, $\Pi_K$ the Euclidean projection.
+- Update with input injection and noise placed after the block: $z_{t+1}=F(\Pi_K(z_t),x)+\xi_t$, $\xi_t\sim N(0,\sigma^2I_m)$ independent. The private input $x$ enters every step.
+- $F(\cdot,x)$ is $\rho$-Lipschitz on $K$ with $0\le\rho\le1$, for every $x$. Then $\psi_x=F(\Pi_K(\cdot),x)$ is $\rho$-Lipschitz on all of $\mathbb R^m$, which is what the noisy iterates need.
+- Adjacent $x,x'$: $\sup_{z\in K}\|F(z,x)-F(z,x')\|\le s_x$.
+- Only $z_T$ is released.
+
+Claim: the release is $(\alpha,\varepsilon_\alpha)$-RDP with
+$$\varepsilon_\alpha\le\frac{\alpha s_x^2}{2\sigma^2}\,\Gamma_T,\qquad\Gamma_T=\frac{S_T^2}{S_T^{(2)}}=\frac{(1+\rho)(1-\rho^T)}{(1-\rho)(1+\rho^T)}\le\min\Big\{T,\frac{1+\rho}{1-\rho}\Big\}\quad(\Gamma_T=T\text{ at }\rho=1).$$
+
+**(a) Proven: isotropic linear loop.** $F(z,x)=\rho z+b(x)$, $K=\mathbb R^m$. Then $z_T$ is Gaussian with mean shift $S_T\,(b(x)-b(x'))$ between adjacent inputs and covariance $\sigma^2S_T^{(2)}I$, so its Rényi divergence is exactly $\alpha\|b(x)-b(x')\|^2S_T^2/(2\sigma^2S_T^{(2)})$. The bound holds with equality at $s_x=\|b(x)-b(x')\|$.
+
+**(b) Proof sketch only: general case.** Shifted-Rényi argument of Feldman et al. with a contraction-reduction step: track a shift $z_t=\rho z_{t-1}+s_x-a_t$, pay $\frac{\alpha}{2\sigma^2}\sum_ta_t^2$. Because $x$ is injected at every step, the shift is fed at every step. Minimizing $\sum_ta_t^2$ subject to $z_T=0$ gives $a_t\propto\rho^{T-t}$ and the value above; feasibility $z_t\ge0$ reduces to $\rho^{T-t}\le1$ (checked numerically for the schedule, `checks/check_theory.py`).
+
+What a complete proof still has to supply:
+
+1. The contraction-reduction lemma for vector-valued states and a general nonlinear $\rho$-Lipschitz $\psi$, in the form $D_\alpha^{(\rho z+s)}(\psi(X)\,\|\,\psi'(X'))\le D_\alpha^{(z)}(X\,\|\,X')$ when $\sup\|\psi-\psi'\|\le s$. I have not written this out; I am relying on the published non-expansive version and its strongly-convex extension.
+2. The shift-reduction lemma for Gaussian noise in $\mathbb R^m$ with the stated noise placement.
+3. That the control sequence $a_t$ is admissible (non-negative shifts, terminal shift zero) for every $T$ and $\rho\in[0,1]$; only the closed-form schedule has been checked, numerically.
+4. That projecting before the block, as defined above, is the right construction, and what changes if the noise is added before the projection.
+
+Until then, read "the privacy cost stops growing with loop depth" as established for the isotropic linear loop and conjectured elsewhere. Naive composition gives $\Gamma_T=T$; at $\rho=0.9$, $\Gamma_{100}=19.0$.
 
 **No free lunch.** In the linear case $z_T$ is the noiseless output plus $N(0,\sigma^2S_T^{(2)})$, which is output perturbation at sensitivity $s_xS_T$: identical privacy, identical noise. In-loop noise can only help through nonlinearity.
 
@@ -228,7 +286,6 @@ Ratios throughout; seed is the unit.
 |---|---|---|
 | P1 | DP-induced loss increase at $2T_{\text{train}}$ divided by that at $T_{\text{train}}$ is $\gg1$ and grows with training steps for fixed-$T$ training; $\approx1$ for random-$T$ training | ratio within seed CI of 1 for fixed-$T$ models with $\hat\rho\ge0.9$ |
 | P2 | noise-only arm (no clipping), matched $\eta s^2$: in-horizon excess loss ratio across $\hat\rho$ bins $\approx1$ | excess loss scales like $S_T^2$ |
-| P3 | *withdrawn (built on H2)* | — |
 | P3′ | clip-only arm, trained to convergence: the fraction of training samples with $\hat\rho_i>1$ is at least 3× the unclipped fraction, and the test-loss ratio clipped/unclipped grows with $T$ | ratio $\le1.5$ at $T\ge16$ |
 | P6 | the P3′ ratio stays $\approx1$ in $T$ for blocks with normalized updates (softmax attention, normalized state) and grows for linear-attention or unnormalized residual loops. *Toy status: holds (§16).* | no difference between the two block types |
 | P7 | in a trained looped transformer, per-sample gradient norm tracks $1/(1-\hat\rho_i)$ for attention-temperature-like parameters and not for step-size-like ones (Prop 11) | rank correlation $<0.3$ for the first group, or equal in both |
@@ -239,7 +296,7 @@ Null control for P1: inject noise of equal norm (i) in the Hessian null space at
 
 ## 13. Open problems, in order of attack
 
-- **Next step (not theory): a real-model pilot.** The toy-level theory now makes four checkable predictions (P1, P3′, P6, P7). A small looped transformer on in-context regression, with a linear-attention arm and a softmax arm, clip-only and clip-plus-noise, $T\in\{4,16\}$, would test all four. Preregister before running; none of this has touched a trained model.
+- **Pilot v1 is done (summary at the top). Next: the mechanism grid proposed in `docs/review-2026-11-16-response.md`, preregistered as v2.** The original plan, for the record: The toy-level theory now makes four checkable predictions (P1, P3′, P6, P7). A small looped transformer on in-context regression, with a linear-attention arm and a softmax arm, clip-only and clip-plus-noise, $T\in\{4,16\}$, would test all four. Preregister before running; none of this has touched a trained model.
 - **O1.** In-context linear regression with a looped block. **Done at the stationary-point level (§15), including the matrix preconditioner at $\Gamma=\gamma I$ and the softmax loop (§16).** Remaining: (a) the matrix case away from $\Gamma\propto I$ (anisotropic prompts); (b) a finite-sample statement for the clipped fixed point in terms of the law of $\lambda_{\max}$; (c) a softmax loop that does regression, not retrieval.
 - **O2.** Lower bound: is $S_T^{5/2}$ necessary?
 - **O3.** Theorem 1 under Lemma 1′ with clipping retained (high-probability stay in the tube).
@@ -331,7 +388,7 @@ The mechanism persists and is weaker under matrix clipping. Only the trace direc
 
 **Design implication (A6).** Remove the data dependence of the stability region instead of asking DP training to learn it. Candidates: per-prompt or token normalization (the toy), a bounded state, a transition parametrized to be contractive. §16 separates what each of these buys; v0.2's claim here that softmax attention "cannot expand" was wrong (correction 7).
 
-**Relation to `claude/dp-blind-clipping.md`.** Same family: clipping moves the fixed point of the objective. The difference is that there a reweighting that ignores the label restores the fixed point, because the restoring force is carried by sign balance. Here it is carried by magnitude, so no reweighting restores it.
+**Relation to the label-blind clipping note** (a separate study, not in this repository)**.** Same family: clipping moves the fixed point of the objective. The difference is that there a reweighting that ignores the label restores the fixed point, because the restoring force is carried by sign balance. Here it is carried by magnitude, so no reweighting restores it.
 
 ## 16. Softmax-attention loop
 
@@ -387,18 +444,40 @@ Replication at $C=$ median over five independent draws: $R_C$ median 1.000, rang
 
 **Caveats.** One scalar parameter; keys equal values; a retrieval task, not regression; $\rho_i$ is the Jacobian norm at the final state, an upper proxy for the local rate; no DP noise in these runs; $T\le64$ for the clipping table.
 
+## 17. The softmax toy and the pilot's softmax block are different models
+
+The review of 16 Nov pointed out that §16 and pilot prediction E2 were being read as one result. They are not.
+
+| | Softmax toy (§16, `checks/check_softmax.py`) | Pilot block `soft_norm` (`pilot/pilot.py`) |
+|---|---|---|
+| Trainable parameters | one inverse temperature | about 8.8k: embedding, Q, K, V, O, MLP, LayerNorm gains, head |
+| Keys and values | identical (the tokens) | separate learned projections |
+| Tokens | unit norm | raw Gaussian; LayerNorm before attention and before the MLP |
+| Update | convex combination of state and tokens | residual stream: identity path plus attention plus MLP |
+| State | bounded by construction | unbounded; grows with the loop count through input injection |
+| Task | retrieval | in-context linear regression |
+| What is proven | Prop 10 bounds | nothing |
+
+**What E2 can show.** That clipping has a small effect on this particular small pre-LayerNorm residual block, at the loop counts tested. It does not test Prop 10, and it does not validate "bounded softmax loops are robust" from §16.
+
+**Shared between the two.** Attention weights are normalized, so the attention output is a convex combination of value vectors; the parameter that sharpens attention moves the loop's fixed point instead of only its rate (Prop 11 b).
+
+**Different.** The toy's robustness argument rests on a bounded state and a single fixed-point parameter. The pilot block has neither a bounded state nor a contraction bound: its Jacobian has an identity path, so the jvp-based expansion rate is at least 1 for every prompt. Whatever makes it insensitive to clipping in E2 is not established; LayerNorm before the read-out, which bounds the prediction, is the obvious candidate and is untested.
+
+**Consequence for the claims.** A6 is a statement about the toy. A trained-model test of it needs a pilot arm that implements the toy's block (convex-combination update, normalized tokens), which the current pilot does not have.
+
 ## Numerical checks
 
-`claude/dp-looped/check_softmax.py` (numpy, about 10 minutes; each function reseeds and can be run alone): Props 10–11, the forgetting check, the softmax clipping table and replication of §16, and the matrix-preconditioner table of §15.
+`checks/check_softmax.py` (numpy, about 10 minutes; each function reseeds and can be run alone): Props 10–11, the forgetting check, the softmax clipping table and replication of §16, and the matrix-preconditioner table of §15.
 
-`claude/dp-looped/check_theory.py` (numpy, about a minute).
+`checks/check_theory.py` (numpy, about a minute).
 
 - Lemmas 1–3 on a tanh loop, $\rho\in\{0.5,0.9,0.99\}$, $T\in\{5,\dots,400\}$, 200 pairs each: observed/bound $\le0.20$, $0.17$, $0.01$. The bounds hold and are loose for random loops.
 - Prop 3: Monte Carlo over predicted within 2.4% for tied and untied; gradient identity $M_T^\top v$ to $10^{-16}$.
 - Props 4 and 7: tables above; the optimal shift schedule is feasible in every case.
 - §9 toy: as tabulated.
 
-`claude/dp-looped/check_o1.py` (numpy, about 2.5 minutes).
+`checks/check_o1.py` (numpy, about 2.5 minutes).
 
 - Prop 9: supremum of the contracting-side profile is 0.250, 0.211, 0.196, 0.187, 0.185, 0.184 at $T=1,2,4,16,64,256$; at $u=2.2$ the expansive-side value is 2.6, 7.6, 32, $1.0\times10^4$, $1.6\times10^{12}$.
 - Theorem 2 (i): unclipped $\max_i\rho_i$ is 1.29, 1.04, 1.009 at $T=4,16,64$.
@@ -430,3 +509,19 @@ IDs marked ✓ were seen in search results on 11–15 Nov; the rest are from mem
 - Béthune et al. DP-SGD Without Clipping: The Lipschitz Neural Network Way. arXiv 2305.16202 ✓.
 - Ding et al. Delving into Differentially Private Transformer. arXiv 2405.18194 ✓.
 - El Mais, Chehab, Issa, Tajeddine. Is Weight Tying Still Beneficial for Decoder-Only LLMs in Private Settings Under DP-SGD? (Sept 2026; ID not retrieved).
+
+## Appendix A. Withdrawn material
+
+Kept so the record is complete. Nothing in this appendix is part of the current theory.
+
+**H2 (v0.1, withdrawn in v0.2, scope clarified in v0.3).**
+
+In looped models $w_i$ is anti-correlated with the loop depth sample $i$ needs. Slowly contracting samples have gradients larger by up to $S_T(\rho_i)/S_T(\rho_{\text{med}})\le T(1-\rho_{\text{med}})$, so the effective objective $\sum_iw_i\ell_i$ underweights them, increasingly with $T$ until $T\gtrsim1/(1-\max_i\rho_i)$.
+
+*Worked instance given with H2.* A looped linear-attention block doing in-context gradient descent on least squares has $w_{t+1}=(I-\eta\hat\Sigma_x)w_t+\eta X^\top y/n$, so $\rho_i=1-\eta\lambda_{\min}(\hat\Sigma_{x_i})$. Heterogeneity of $\rho_i$ is heterogeneity of in-context condition numbers, and H2 predicts DP clipping down-weights ill-conditioned prompts.
+
+Why it was wrong: this is fixed-point-parameter reasoning (Prop 11 b) applied to a loop whose parameter only sets the rate (Prop 11 a). §15 has the corrected statement.
+
+**P3 (v0.1, withdrawn in v0.2).** "Clip weight $w_i$ anti-correlated with $S_T(\hat\rho_i)$; the clip-only arm hurts ill-conditioned prompts more, increasingly with $T$." Built on H2. Replaced by P3′.
+
+**Pilot E1, ordering clause (preregistered 15 Nov, failed).** "The unstable-fraction difference at $T=16$ exceeds the one at $T=4$." It failed (+4.74 pp against +5.30 pp), and it was inconsistent with this document's own §15 table, where the unstable fraction falls with $T$ while the loss consequence grows. The failure stays on record in `pilot/PREREG_PILOT.md`; the clause will not be carried into the next preregistration as a confirmatory test.
