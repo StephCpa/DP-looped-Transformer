@@ -1,0 +1,6 @@
+tier a1tune_select: 68 pending
+  0/68 raw adam T=4 c=1.0 seed=10 lr=0.0003 valid=True (9s)
+  20/68 raw adam T=16 c=0.25 seed=10 lr=0.003 valid=True (105s)
+  40/68 raw adam T=16 c=2.0 seed=10 lr=0.03 valid=True (200s)
+  60/68 tok adam T=16 c=1.0 seed=10 lr=0.03 valid=True (290s)
+tier complete

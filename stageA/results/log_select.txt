@@ -1,0 +1,13 @@
+tier select: 210 pending
+  0/210 con adam T=1 c=None seed=10 lr=0.0003 valid=True (11s)
+  20/210 raw sgd T=1 c=None seed=10 lr=0.001 valid=True (94s)
+  40/210 tok sgd T=1 c=None seed=10 lr=1.0 valid=True (161s)
+  60/210 raw adam T=4 c=None seed=10 lr=0.03 valid=True (253s)
+  80/210 tok sgd T=4 c=None seed=10 lr=0.1 valid=True (319s)
+  100/210 raw adam T=8 c=None seed=10 lr=0.003 valid=True (405s)
+  120/210 tok sgd T=8 c=None seed=10 lr=0.01 valid=True (469s)
+  140/210 raw adam T=16 c=None seed=10 lr=0.0003 valid=True (563s)
+  160/210 tok sgd T=16 c=None seed=10 lr=0.001 valid=True (638s)
+  180/210 con sgd T=32 c=None seed=10 lr=1.0 valid=True (746s)
+  200/210 tok adam T=32 c=None seed=10 lr=0.03 valid=True (839s)
+tier complete

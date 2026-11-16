@@ -140,3 +140,78 @@ selection 210 → A0 630 → A1 170 → secondary-estimand selection 68 and eval
 
 ## Amendments
 Any change after this file is committed is logged here with its date; results obtained under the earlier design are kept.
+
+(No amendments. Everything above this line is the frozen text, SHA-256
+`e44fb77b5f3f01d9a15656f8d32e8e4613313e988cf36e7f45f4e4991980b3ca`.)
+
+## Outcome (16 Nov 2026): all 1,188 runs
+Results: `stageA/results/stageA_results.jsonl`, SHA-256 `118d55f7a008c812260949ad8a8eb523fcbfa8f56354844a91a53b41dd758438`;
+full analysis output: `stageA/results/analysis.txt`. All rows carry the frozen code hash.
+Run notes: the last tier (secondary estimand) was interrupted by an environment shutdown at 57 of 110 runs and resumed;
+the file has 1,188 rows and 1,188 distinct keys. The confirmation tier was started before any screening result was looked at.
+
+### Confirmatory family (primary estimand, primary metric, 10 seeds, Holm at 0.05)
+
+| | Contrast | Mean [95% interval] | Holm p | Result |
+|---|---|---|---|---|
+| H1 | erosion > 0 (raw, Adam, T=16, c=1) | −17.72 pp [−38.54, +3.10] | 1.00 | **Failed** |
+| H2 | erosion falls as c rises | +1.18 pp per decade [+1.00, +1.37] | 0.006 | **Passed** (10/10 seeds) |
+| H3 | erosion > 0 under SGD | −0.00 pp [−0.01, +0.00], n = 9 | 1.00 | **Failed** |
+| H4 | erosion(raw) − erosion(tok) > 0 | −17.73 pp [−38.55, +3.08] | 1.00 | **Failed** |
+| H5 | erosion(raw) − erosion(con) > 0 | −17.72 pp [−38.54, +3.10] | 1.00 | **Failed** |
+| H6 | erosion > 0 at T=4 and T=32 | T=4: −36.29 pp [−67.57, −5.01]; T=32: −11.40 pp [−27.25, +4.45] | 1.00 | **Failed** |
+
+Per-seed H1 effects (pp): −92.36, −36.12, −4.35, −26.87, +0.54, +0.85, −3.61, +0.49, −12.84, −2.91.
+
+By the decision rules fixed above: **H1 failed, so the "clipping erodes stability relative to unclipped training" claim
+has lost its trained-model support.** The accident hypothesis is largely right: pilot E1 does not survive a change of
+initialization and learning-rate rule. H2 passed, so the threshold dose-response stands.
+
+### Not interpretable
+None by rules V1–V3 (one dropped pair, in H3; one seed of ten with a poor unclipped baseline at T=16 and at T=4).
+
+### Why H1 failed (descriptive; read off the preregistered runs)
+- **The unclipped arm is not a stable reference.** Under Adam at the selected rate its primary-metric fraction ranges
+  from 0.07% to 93.26% across the ten seeds at T=16 (1.04% to 99.60% at T=4, 0.04% to 69.68% at T=32). The clipped arm at
+  c=1 ranges from 0.65% to 1.01%.
+- So "erosion" measured how erratic unclipped Adam is. At every threshold tested, clipped training was *more* stable
+  than unclipped training on the primary metric (−15.7 pp at c=0.1 to −18.1 pp at c=10).
+- Among clipped arms the dose-response is clean: 2.87%, 1.95%, 1.30%, 0.86%, 0.67%, 0.48% unstable at
+  c = 0.1, 0.25, 0.5, 1, 2, 10. Lowest against highest threshold, paired: +2.39 pp [+2.04, +2.73], 10/10 seeds.
+- The learning rate was selected on one seed, and the unclipped arm's outcome varies a lot between seeds: at T=4 the
+  rule chose 0.1 by a margin of 0.0011 in validation loss, and that rate is poor on most confirmation seeds.
+  Selecting on a single seed was a weakness of this design.
+- H3: under the shared rate (0.003) both SGD arms sit at about 0.02% and only 0.2% of gradients are clipped, so the
+  contrast had almost nothing to act on. Every one of the 42 invalid runs in the whole study is an unclipped SGD run;
+  no clipped run was ever invalid.
+- H4, H5: token normalization: erosion +0.02 pp [−0.04, +0.07]. Constraint: exactly 0.00% on the primary metric in both
+  arms on every seed, so the transient-gain concern about the certificate did not materialize. Both variants are stable;
+  the contrasts failed because raw erosion was negative, not because the variants misbehaved.
+- Secondary metric (asymptotic), same H1 cells: clipped − unclipped per seed is −64.68, +0.59, −1.65, +0.43, +0.70,
+  +0.62, +0.58, +0.54, +0.55, +0.45: median +0.55 pp, positive in 8 of 10, mean dominated by one blown-up unclipped run.
+
+### Secondary estimand (each clipped arm tunes its own rate; trainability, no confirmatory weight)
+Same picture for H1, H2, H4, H5, H6. One difference: under SGD the clipped arm selects 0.1 against the unclipped arm's
+0.003, reaches a 9× lower median loss (0.00025 against 0.0023) and has 0.63–0.99% unstable prompts against about 0.02%:
++0.80 pp [+0.72, +0.89], 9/9 seeds. Clipping lets SGD train to where it otherwise cannot go, and that solution is better
+for the bulk and worse for the tail.
+
+### A0 screening (descriptive, 3 seeds)
+- raw + Adam: clipped arms more unstable than unclipped at T = 1, 4, 8 with a threshold dose-response (T=4: +11.9 pp at
+  c=0.1 falling to about +3 pp at c ≥ 1), and less unstable at T = 16, 32, where the unclipped arm itself is unstable
+  (23.5% and 3.2%). The sign follows whether the unclipped arm happened to be stable.
+- A0 and A1 disagree at raw + Adam, T=4, c=1 (+3.58 pp on 3 seeds, −36.29 pp on 10): three seeds cannot characterize an
+  erratic reference.
+- raw + SGD: within ±1 pp at T=4 with no consistent sign, about 0 at T=8 and 16; no valid unclipped run at T=32. tok: small positive erosion with a dose-response (T=4: +1.9 pp at c=0.1 to +0.06 at
+  c=10), under 0.3 pp at T ≥ 16. con: 0.00 everywhere.
+
+### Exploratory, post hoc, not preregistered
+Run after the analysis above was seen; `stageA/results/exploratory_unclipped_lr.jsonl`. Question: at the pilot's rate
+(0.003), is the unclipped Adam reference stable, and does erosion reappear? Ten unclipped runs (raw, Adam, T=16) on the
+confirmation seeds, paired with the clipped c=1 arm that had tuned to the same rate.
+- The unclipped arm is stable at this rate (0.07–1.98% on the primary metric).
+- Primary metric: clipped − unclipped = +0.18 pp [−0.29, +0.65], positive in 7/10. No clear effect.
+- Asymptotic metric: +0.51 pp [+0.41, +0.61], positive in 10/10.
+- So where the unclipped reference is stable, an effect in the pilot's direction exists on the pilot's metric at about a
+  tenth of the pilot's size (0.5 pp against 4.7 pp), and is not established on the primary metric. This is a lead for a
+  future preregistration, not a result.
