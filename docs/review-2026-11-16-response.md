@@ -64,4 +64,12 @@ Fixed across stages:
 - Confirmatory predictions limited to the maximum-to-quantile claim: erosion increases as C decreases, is present under
   SGD as well as Adam, and is removed by a step-size constraint. Everything else descriptive.
 
-Decision needed: whether to run all three stages or only A, and whether 10 seeds is the right budget.
+**Decision (16 Nov 2026).** Stage A only, in two tiers: A0 screens the full grid on 3 seeds, descriptively; A1 confirms six
+pre-specified contrasts on 10 new seeds with Holm correction. The primary metric is the T-step gain, with the asymptotic
+spectral radius secondary. Fixed upfront: the learning rate is chosen on the unclipped arm and shared (per-arm tuning is a
+separate, secondary estimand); non-finite gradients stop and invalidate a run; the step-size constraint is an explicit
+certificate under token normalization. Stage B is postponed. Stage C will be preregistered separately after A1. E4 is
+formally closed. Preregistration: `stageA/PREREG_STAGE_A.md`.
+
+Two things in that preregistration differ from the table above and came out of its stage-0 gates: all variants start
+cold (the pilot's warm start made the learning-rate rule select a rate that barely trains), and training runs 2,000 steps.

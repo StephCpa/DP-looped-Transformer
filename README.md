@@ -27,8 +27,10 @@ narrower statements:
 | E2 at T=16 | Failed its band in the favourable direction; not interpretable (learning-rate confound) |
 | E4: extrapolation drift under DP noise | Failed; kill rule triggered |
 
-- Review of 16 Nov and the response to it: `docs/review-2026-11-16-response.md`, including a proposed second-round
-  mechanism grid that has not been run.
+- Review of 16 Nov and the response to it: `docs/review-2026-11-16-response.md`.
+- Extrapolation drift (pilot E4) is closed: it is not a finding of this study.
+- Next: Stage A, preregistered and frozen in `stageA/PREREG_STAGE_A.md`, **not yet run**. It tests whether the E1 effect
+  is robust to clipping threshold, optimizer and loop count, with six confirmatory contrasts on ten new seeds.
 
 ## Contents
 
@@ -40,6 +42,8 @@ narrower statements:
 | `checks/check_o1.py` | Looped in-context gradient descent under clipping: Prop 9, Theorem 2 (about 2.5 minutes) |
 | `checks/check_softmax.py` | Softmax toy loop: Props 10–11, clipping test, replication; matrix preconditioner (about 10 minutes) |
 | `checks/outputs/` | Saved output of the three check scripts |
+| `stageA/PREREG_STAGE_A.md` | Stage A preregistration: screening grid (A0) and six confirmatory contrasts (A1) |
+| `stageA/stageA.py` | Stage A code (float64; non-finite gradients stop and invalidate a run), SHA-256 `54d4ff81…` |
 | `pilot/PREREG_PILOT.md` | Preregistration (frozen text, hash recorded), Amendment 1, partial and final outcomes |
 | `pilot/pilot.py` | Frozen pilot code, SHA-256 `6240354a…`; used for the first 91 runs |
 | `pilot/pilot_v1_1.py` | Amendment 1: adds logging of non-finite gradients, provenance fields and finite-horizon stability measures; training arithmetic unchanged; used for the last 29 runs |
