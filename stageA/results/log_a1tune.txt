@@ -1,0 +1,9 @@
+tier a1tune: 110 pending
+  0/110 raw adam T=4 c=1.0 seed=101 lr=0.01 valid=True (8s)
+  20/110 raw adam T=16 c=0.1 seed=101 lr=0.001 valid=True (101s)
+  40/110 raw adam T=16 c=0.5 seed=101 lr=0.003 valid=True (196s)
+tier a1tune: 53 pending
+  0/53 raw adam T=16 c=1.0 seed=108 lr=0.003 valid=True (9s)
+  20/53 raw adam T=16 c=10.0 seed=108 lr=0.01 valid=True (99s)
+  40/53 tok adam T=16 c=1.0 seed=108 lr=0.01 valid=True (190s)
+tier complete

@@ -7,10 +7,12 @@ transformers. This repository does not support the claim that DP generally harms
 narrower statements:
 
 1. The privacy accounting of DP-SGD does not change with loop depth.
-2. The loop-specific risk comes from per-sample gradient clipping. A loop stays stable because the few samples on which
-   it expands produce very large gradients; clipping caps exactly those, so stability is set by a quantile of the
-   training samples instead of their maximum. Shown for linear in-context-gradient-descent loops, by fixed-point
-   analysis and in small trained models.
+2. Under per-sample clipping, the stability of a loop is a quantile condition governed by the threshold: the lower the
+   threshold, the larger the unstable fraction. Proven for the fixed points of a linear in-context-gradient-descent
+   loop and confirmed in trained models on ten seeds (Stage A, H2).
+
+Not supported: that clipped training is less stable than unclipped training. The pilot suggested it (E1); the
+preregistered replication failed (Stage A, H1), because unclipped training is itself erratic.
 
 ## Status (16 Nov 2026)
 
@@ -27,8 +29,11 @@ narrower statements:
 | E2 at T=16 | Failed its band in the favourable direction; not interpretable (learning-rate confound) |
 | E4: extrapolation drift under DP noise | Failed; kill rule triggered |
 
-- Review of 16 Nov and the response to it: `docs/review-2026-11-16-response.md`, including a proposed second-round
-  mechanism grid that has not been run.
+- Review of 16 Nov and the response to it: `docs/review-2026-11-16-response.md`.
+- Extrapolation drift (pilot E4) is closed: it is not a finding of this study.
+- Stage A (`stageA/PREREG_STAGE_A.md`): complete, 1,188 runs. Of six confirmatory contrasts on ten new seeds, one
+  passed (H2, the threshold dose-response) and five failed, including the replication of E1 (H1: −17.7 pp [−38.5, +3.1]).
+  The unclipped reference ranged from 0.07% to 93% unstable across seeds; clipped arms were tight (0.65–1.01% at C=1).
 
 ## Contents
 
@@ -40,6 +45,9 @@ narrower statements:
 | `checks/check_o1.py` | Looped in-context gradient descent under clipping: Prop 9, Theorem 2 (about 2.5 minutes) |
 | `checks/check_softmax.py` | Softmax toy loop: Props 10–11, clipping test, replication; matrix preconditioner (about 10 minutes) |
 | `checks/outputs/` | Saved output of the three check scripts |
+| `stageA/PREREG_STAGE_A.md` | Stage A preregistration (frozen text, hash recorded) and outcome |
+| `stageA/results/` | All 1,188 runs, the analysis output, run logs, and one labelled exploratory file |
+| `stageA/stageA.py` | Stage A code (float64; non-finite gradients stop and invalidate a run), SHA-256 `54d4ff81…` |
 | `pilot/PREREG_PILOT.md` | Preregistration (frozen text, hash recorded), Amendment 1, partial and final outcomes |
 | `pilot/pilot.py` | Frozen pilot code, SHA-256 `6240354a…`; used for the first 91 runs |
 | `pilot/pilot_v1_1.py` | Amendment 1: adds logging of non-finite gradients, provenance fields and finite-horizon stability measures; training arithmetic unchanged; used for the last 29 runs |

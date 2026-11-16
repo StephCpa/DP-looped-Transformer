@@ -1,0 +1,11 @@
+tier a1: 170 pending
+  0/170 raw adam T=4 c=None seed=101 lr=0.1 valid=True (8s)
+  20/170 con adam T=16 c=None seed=101 lr=0.1 valid=True (89s)
+  40/170 raw adam T=16 c=None seed=101 lr=0.01 valid=True (194s)
+  60/170 raw adam T=16 c=0.25 seed=101 lr=0.01 valid=True (292s)
+  80/170 raw adam T=16 c=1.0 seed=101 lr=0.01 valid=True (389s)
+  100/170 raw adam T=16 c=10.0 seed=101 lr=0.01 valid=True (485s)
+  120/170 raw sgd T=16 c=1.0 seed=101 lr=0.003 valid=True (574s)
+  140/170 tok adam T=16 c=1.0 seed=101 lr=0.01 valid=True (670s)
+  160/170 raw adam T=32 c=1.0 seed=101 lr=0.01 valid=True (778s)
+tier complete
